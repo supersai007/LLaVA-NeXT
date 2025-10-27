@@ -238,12 +238,23 @@ class LlavaMistralForCausalLM(MistralForCausalLM, LlavaMetaForCausalLM):
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
         if inputs_embeds is None:
-            (input_ids, position_ids, attention_mask, past_key_values, inputs_embeds, labels, modality_ids_new) = self.prepare_inputs_labels_for_multimodal(input_ids, position_ids, attention_mask, past_key_values, labels, images, modalities, image_sizes)
-            # Append modality_ids to the existing modality_ids (of past_key_values)
-            if modality_ids is None:
-                modality_ids = modality_ids_new
+            (input_ids, position_ids, attention_mask, past_key_values, inputs_embeds, labels, _) = self.prepare_inputs_labels_for_multimodal(input_ids, position_ids, attention_mask, past_key_values, labels, images, modalities, image_sizes)
+
+        # This is a hack to update the modality ids in generation since the logic to recursively update the ids is too much refactor
+        if modality_ids is not None:
+            if input_ids is not None:
+                b, input_seq_len = input_ids.shape
             else:
-                modality_ids = torch.cat((modality_ids, modality_ids_new), dim=1)
+                b, input_seq_len, _ = inputs_embeds.shape
+            past_key_values_len = past_key_values[0][0].shape[2] if past_key_values is not None else 0
+            seq_len = input_seq_len + past_key_values_len
+            delta_len = seq_len - modality_ids.shape[1]
+            if delta_len > 0:
+                # append 0s to the modality ids i.e. marking the new tokens as text
+                delta_modality_ids = torch.full((b, delta_len), 0, dtype=modality_ids.dtype, device=modality_ids.device)
+                modality_ids = torch.cat((modality_ids, delta_modality_ids), dim=1)
+            elif delta_len < 0:
+                modality_ids = modality_ids[:, :seq_len]
 
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
