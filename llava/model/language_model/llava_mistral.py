@@ -36,6 +36,7 @@ from transformers.models.mistral.modeling_mistral import (
 )
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
+from .mask_utils import modality_ids_to_modality_attention_mask, combine_attention_masks
 
 logger = logging.get_logger(__name__)
 
@@ -143,6 +144,10 @@ class LlavaMistralModel(LlavaMetaModel, MistralModel):
                 sliding_window=self.config.sliding_window,
             )
 
+        if modality_ids is not None:
+            modality_attention_mask = modality_ids_to_modality_attention_mask(modality_ids, (batch_size, seq_length), inputs_embeds.dtype)
+            modality_attention_mask = combine_attention_masks(attention_mask, modality_attention_mask)
+
         hidden_states = inputs_embeds
 
         # decoder layers
@@ -150,7 +155,7 @@ class LlavaMistralModel(LlavaMetaModel, MistralModel):
         all_self_attns = () if output_attentions else None
         next_decoder_cache = None
 
-        for decoder_layer in self.layers:
+        for idx, decoder_layer in enumerate(self.layers):
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
 
@@ -158,7 +163,7 @@ class LlavaMistralModel(LlavaMetaModel, MistralModel):
                 layer_outputs = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
                     hidden_states,
-                    attention_mask,
+                    attention_mask if idx % 2 == 0 else modality_attention_mask,
                     position_ids,
                     past_key_values,
                     output_attentions,
@@ -167,7 +172,7 @@ class LlavaMistralModel(LlavaMetaModel, MistralModel):
             else:
                 layer_outputs = decoder_layer(
                     hidden_states,
-                    attention_mask=attention_mask,
+                    attention_mask=attention_mask if idx % 2 == 0 else modality_attention_mask,
                     position_ids=position_ids,
                     past_key_value=past_key_values,
                     output_attentions=output_attentions,
