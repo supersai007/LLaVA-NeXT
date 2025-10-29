@@ -222,6 +222,8 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
 
                 elif "with_alternating_attn" in model_name.lower():
                     model = LlavaQwenWithAlternatingAttnForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
+                elif "with_alternating_cross_attn" in model_name.lower():
+                    model = LlavaQwenWithAlternatingCrossAttnForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
 
                 else:
                     from llava.model.language_model.llava_qwen import LlavaQwenConfig

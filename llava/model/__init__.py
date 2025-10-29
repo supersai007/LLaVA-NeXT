@@ -4,6 +4,7 @@ AVAILABLE_MODELS = {
     "llava_llama": "LlavaLlamaForCausalLM, LlavaConfig",
     "llava_qwen": "LlavaQwenForCausalLM, LlavaQwenConfig",
     "llava_qwen_with_alternating_attn": "LlavaQwenWithAlternatingAttnForCausalLM, LlavaQwenWithAlternatingAttnConfig",
+    "llava_qwen_with_alternating_cross_attn": "LlavaQwenWithAlternatingCrossAttnForCausalLM, LlavaQwenWithAlternatingCrossAttnConfig",
     "llava_mistral": "LlavaMistralForCausalLM, LlavaMistralConfig",
     "llava_mistral_with_alternating_attn": "LlavaMistralWithAlternatingAttnForCausalLM, LlavaMistralWithAlternatingAttnConfig",
     "llava_mixtral": "LlavaMixtralForCausalLM, LlavaMixtralConfig",
