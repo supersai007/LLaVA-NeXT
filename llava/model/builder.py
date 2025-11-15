@@ -175,8 +175,12 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 model = LlavaMixtralForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, config=llava_cfg, **kwargs)
 
             elif "mistral" in model_name.lower() or "zephyr" in model_name.lower():
-                tokenizer = AutoTokenizer.from_pretrained(model_path)
-                model = LlavaMistralForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
+                if "with_alternating_attn" in model_name.lower():
+                    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
+                    model = LlavaMistralWithAlternatingAttnForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
+                else:
+                    tokenizer = AutoTokenizer.from_pretrained(model_path)
+                    model = LlavaMistralForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
             elif (
                 "wizardlm-2" in model_name.lower()
                 and "vicuna" in model_name.lower()
@@ -215,6 +219,11 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                         model = LlavaQwenMoeForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, config=llava_cfg, **kwargs)
                     else:
                         model = LlavaQwenMoeForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
+
+                elif "with_alternating_attn" in model_name.lower():
+                    model = LlavaQwenWithAlternatingAttnForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
+                elif "with_alternating_cross_attn" in model_name.lower():
+                    model = LlavaQwenWithAlternatingCrossAttnForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, **kwargs)
 
                 else:
                     from llava.model.language_model.llava_qwen import LlavaQwenConfig
@@ -289,8 +298,8 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         vision_tower = model.get_vision_tower()
         if not vision_tower.is_loaded:
             vision_tower.load_model(device_map=device_map)
-        if device_map != "auto":
-            vision_tower.to(device="cuda", dtype=torch.float16)
+        # if device_map != "auto":
+        #     vision_tower.to(device="cuda", dtype=torch.float16)
         image_processor = vision_tower.image_processor
 
     if hasattr(model.config, "max_sequence_length"):
