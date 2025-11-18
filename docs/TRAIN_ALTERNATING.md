@@ -11,7 +11,7 @@ Two common flows:
 
 ```bash
 python train_alternating.py \
-  --model_name_or_path lmms-lab/llava-onevision-qwen2-0.5b-ov \
+  --model_name_or_path llava-hf/llava-onevision-qwen2-0.5b-ov-hf \
   --data_path /path/to/laion_subset.json \
   --inspect_data
 ```
